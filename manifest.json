@@ -1,0 +1,24 @@
+{
+    "manifest_version": 2,
+    "name": "Odysee Add On",
+    "version": "1.0.0",
+    "description": "This is a sample description",
+    "short_name": "Short Sample Name",
+    "permissions": ["activeTab", "declarativeContent", "storage", "https://odysee.com/*"],
+    "content_scripts": [
+      {
+        "matches": ["https://odysee.com/*"],
+        "run_at": "document_end",
+        "css": ["background.css"],
+        "js": ["arrive.min.js", "background.js"]
+      }
+    ],
+    "browser_action": {
+      "default_title": "Click to see Playlist",
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "icons/icon16.png",
+        "32": "icons/icon32.png"
+      }
+    }
+   }
