@@ -1,9 +1,177 @@
-var storageData = {"currentPlaylist":[
-    {"title":"crow song", "url":"https://odysee.com/@Fwfate:5/%E3%80%90%E4%B9%85%E9%81%A0%E3%81%9F%E3%81%BE%E3%80%91crow-song%EF%BC%88girls-dead:5"},
-    {"title":"alchemy", "url":"https://odysee.com/@Fwfate:5/alchemy-girls-dead-monster-vtuber:2"}
-]};
-chrome.storage.sync.set(storageData, function() {
-    chrome.storage.sync.get(['currentPlaylist'], function(result) {
-        console.log("testing popup", result);
+var storageData = {
+    "playLists":[
+        {
+            "listName": "Testing List",
+            "playList": [
+                {"title":"crow song", "url":"https://odysee.com/@Fwfate:5/%E3%80%90%E4%B9%85%E9%81%A0%E3%81%9F%E3%81%BE%E3%80%91crow-song%EF%BC%88girls-dead:5"},
+                {"title":"alchemy", "url":"https://odysee.com/@Fwfate:5/alchemy-girls-dead-monster-vtuber:2"}
+            ],
+        },
+        {
+            "listName": "Testing List",
+            "playList": [
+                {"title":"crow song", "url":"https://odysee.com/@Fwfate:5/%E3%80%90%E4%B9%85%E9%81%A0%E3%81%9F%E3%81%BE%E3%80%91crow-song%EF%BC%88girls-dead:5"},
+                {"title":"alchemy", "url":"https://odysee.com/@Fwfate:5/alchemy-girls-dead-monster-vtuber:2"}
+            ],
+        }
+    ],
+    "currentPlayListIndex": -1,
+    "currentPlaylist":[
+        {"title":"crow song", "url":"https://odysee.com/@Fwfate:5/%E3%80%90%E4%B9%85%E9%81%A0%E3%81%9F%E3%81%BE%E3%80%91crow-song%EF%BC%88girls-dead:5"},
+        {"title":"alchemy", "url":"https://odysee.com/@Fwfate:5/alchemy-girls-dead-monster-vtuber:2"}
+    ]
+};
+
+var currentDate = new Date();
+console.log('testing', currentDate);
+
+chrome.storage.sync.get(['playLists', 'currentPlaylist', 'currentPlayListIndex'], function(result) {
+    storageData = result;
+    console.log("current storageData", storageData);
+    chrome.tabs.getSelected(null,function(tab) {
+        var currentURL = tab.url;
+        var isOdysee = currentURL.startsWith('https://odysee.com/')
+        addComponentsByData(isOdysee, currentURL);
     });
-})
+});
+
+
+
+
+
+function addComponentsByData(isOdysee, currentURL) {
+    var mainBody = "<h1>My Odysee Lists</h1>";
+
+    for (var playListIndex in storageData['playLists']) {
+        var playListDiv = '<div id="list-'+playListIndex+'" class="play-list">';
+        playListDiv += '<input class="list-title" value="'+storageData['playLists'][playListIndex]['listName']+'" readonly/>'
+        for (var videoIndex in storageData['playLists'][playListIndex]["playList"]) {
+            var videoData = storageData['playLists'][playListIndex]["playList"][videoIndex]
+            playListDiv += '<div class="video-row">';
+            playListDiv += '<input class="video-number" id="video-number-'+playListIndex+'-'+videoIndex+'" value="' + (parseInt(videoIndex) + 1) + '" readonly/>';
+            playListDiv += '<input class="video-title" id="video-title-'+playListIndex+'-'+videoIndex+'" value="' + videoData['title'] + '" readonly/>';
+            playListDiv += '<input class="video-url" id="video-url-'+playListIndex+'-'+videoIndex+'" value="' + videoData['url'] + '" readonly/>';
+            playListDiv += '<div class="video-edit-buttons">';
+            playListDiv += '<a title="Edit Video" class="edit-button" id="edit-button-'+playListIndex+'-'+videoIndex+'"'+
+                            ' data-list-id="'+playListIndex+'" data-video-id="'+videoIndex+'">&#128393;</a>';
+            playListDiv += '<a title="Save Changes" class="save-button" id="save-button-'+playListIndex+'-'+videoIndex+'"'+
+                            ' data-list-id="'+playListIndex+'" data-video-id="'+videoIndex+'">&#128190;</a>';
+            playListDiv += '<a title="Delete Video" class="delete-button" id="delete-button-'+playListIndex+'-'+videoIndex+'"'+
+                            ' data-list-id="'+playListIndex+'" data-video-id="'+videoIndex+'">&#128465;</a>';
+            playListDiv += '</div>';
+            playListDiv += '</div>';
+        }
+        playListDiv += '<div id="new-video-div-'+playListIndex+'" class="new-video-div video-row">';
+        playListDiv += '<input class="video-number" id="new-video-number-'+playListIndex+'" value="' + (parseInt(videoIndex) + 2) + '" readonly/>';
+        playListDiv += '<input class="video-title" id="new-video-title-'+playListIndex+'" value=""/>';
+        playListDiv += '<input class="video-url" id="new-video-url-'+playListIndex+'" value=""/>';
+        playListDiv += '<a title="Add New Video" id="save-new-button-'+playListIndex+'" class="save-new-button" data-list-id="'+playListIndex+'">&#128190;</a>';
+        playListDiv += '</div>'
+        if (isOdysee)
+            playListDiv += '<a title="Add Current Video to List" class="add-current-button" data-list-id="'+playListIndex+'">+ Current</a>'
+        playListDiv += '<a title="Add New Video to List" class="add-new-button" id="add-new-button-'+playListIndex+'"data-list-id="'+playListIndex+'">+ New</a>'
+        playListDiv += '</div>';
+        mainBody += playListDiv;
+    }
+
+    document.body.appendChild(document.createRange().createContextualFragment(mainBody));
+
+    function startEditing() {
+        var listIndex = this.getAttribute("data-list-id");
+        var videoIndex = this.getAttribute("data-video-id");
+        document.getElementById("video-title-"+listIndex+"-"+videoIndex).readOnly = false;
+        document.getElementById("video-url-"+listIndex+"-"+videoIndex).readOnly = false;
+        document.getElementById("edit-button-"+listIndex+"-"+videoIndex).style.display = 'none';
+        document.getElementById("save-button-"+listIndex+"-"+videoIndex).style.display = 'inline-block';
+    };
+
+    var editButtons = document.getElementsByClassName("edit-button");
+    for (var i = 0; i < editButtons.length; i++) {
+        editButtons[i].addEventListener('click', startEditing, false);
+    }
+
+    function saveEditing() {
+        var listIndex = this.getAttribute("data-list-id");
+        var videoIndex = this.getAttribute("data-video-id");
+        var videoTitleInput = document.getElementById("video-title-"+listIndex+"-"+videoIndex);
+        videoTitleInput.readOnly = true;
+        var videoURLInput = document.getElementById("video-url-"+listIndex+"-"+videoIndex);
+        videoURLInput.readOnly = true;
+        document.getElementById("edit-button-"+listIndex+"-"+videoIndex).style.display = 'inline-block';
+        document.getElementById("save-button-"+listIndex+"-"+videoIndex).style.display = 'none';
+        storageData.playLists[listIndex].playList[videoIndex].title = videoTitleInput.value;
+        storageData.playLists[listIndex].playList[videoIndex].url = videoURLInput.value;
+        var updateData = {"playLists": storageData.playLists};
+        chrome.storage.sync.set(updateData);
+    }
+
+    var saveButtons = document.getElementsByClassName("save-button");
+    for (var i = 0; i < saveButtons.length; i++) {
+        saveButtons[i].addEventListener('click', saveEditing, false);
+    }
+
+    function deleteVideo() {
+        var listIndex = this.getAttribute("data-list-id");
+        var videoIndex = this.getAttribute("data-video-id");
+        storageData.playLists[listIndex].playList.splice(videoIndex,1);
+        var updateData = {"playLists": storageData.playLists};
+        chrome.storage.sync.set(updateData, function() {
+            location.reload();
+        });
+    }
+    var deleteButtons = document.getElementsByClassName("delete-button");
+    for (var i = 0; i < saveButtons.length; i++) {
+        deleteButtons[i].addEventListener('click', deleteVideo, false);
+    }
+
+
+    function addCurrentVideo() {
+        var listIndex = this.getAttribute("data-list-id");
+        var newVideoIndex = storageData.playLists[listIndex].playList.length;
+        storageData.playLists[listIndex].playList.push({"title":"video "+newVideoIndex, "url":currentURL})
+        var updateData = {"playLists": storageData.playLists};
+        chrome.storage.sync.set(updateData, function() {
+            location.reload();
+        });
+    }
+
+    var addCurrentButtons = document.getElementsByClassName("add-current-button");
+    for (var i = 0; i < addCurrentButtons.length; i++) {
+        addCurrentButtons[i].addEventListener('click', addCurrentVideo, false);
+    }
+
+    function startAddingNewVideo() {
+        var listIndex = this.getAttribute("data-list-id");
+        document.getElementById('new-video-div-'+listIndex).style.display = 'block';
+        this.style.display = 'none';
+    }
+
+    var newVideoButtons = document.getElementsByClassName("add-new-button");
+    for (var i = 0; i < newVideoButtons.length; i++) {
+        newVideoButtons[i].addEventListener('click', startAddingNewVideo, false);
+    }
+
+    function saveNewVideo() {
+        var listIndex = this.getAttribute("data-list-id");
+        console.log('testing', listIndex);
+
+        var videoTitleInput = document.getElementById("new-video-title-"+listIndex);
+        var videoURLInput = document.getElementById("new-video-url-"+listIndex);
+        storageData.playLists[listIndex].playList.push({
+            "title": videoTitleInput.value,
+            "url":videoURLInput.value
+        })
+
+        var updateData = {"playLists": storageData.playLists};
+        chrome.storage.sync.set(updateData, function() {
+            location.reload();
+        });
+    }
+
+    var saveNewButtons = document.getElementsByClassName("save-new-button");
+    console.log('testing pre', saveNewButtons);
+    for (var i = 0; i < saveNewButtons.length; i++) {
+        saveNewButtons[i].addEventListener('click', saveNewVideo, false);
+    }
+}
+

@@ -1,0 +1,52 @@
+body{
+    width: 450px;
+    height:450px;
+}
+
+div.play-list {
+    margin-bottom: 20px;
+}
+input:read-only {
+    border: 0;
+    text-overflow: ellipsis;
+}
+.video-row {
+    position: relative;
+    width: 100%;
+}
+.video-row .video-number {
+    display: inline-block;
+    width: 5%;
+}
+.video-row .video-title {
+    display: inline-block;
+    width: 27%;
+}
+.video-row .video-url {
+    display: inline-block;
+    width: 60%;
+}
+.video-row .video-edit-buttons{
+    display: inline-block;
+    width: 8%;
+}
+.video-row .video-edit-buttons a {
+    display: inline-block;
+    width: 50%;
+    text-align: center;
+}
+.video-row .video-edit-buttons a.save-button {
+    display: none;
+}
+
+a {
+    cursor: pointer;
+}
+
+a.add-current-button {
+    margin-right: 20px;
+}
+
+.new-video-div {
+    display: none;
+}
