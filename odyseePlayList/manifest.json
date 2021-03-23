@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "description": "An unofficial chrome extension for Odysee Play List function until official support",
     "short_name": "Short Sample Name",
-    "permissions": ["activeTab", "declarativeContent", "storage", "https://odysee.com/*"],
+    "permissions": ["activeTab", "storage", "https://odysee.com/*"],
     "content_scripts": [
       {
         "matches": ["https://odysee.com/*"],
