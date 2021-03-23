@@ -1,27 +1,8 @@
-//This is just for an overview of what the storage data looks like. Will be overwritten by chrome.storage.set in the code
 var storageData = {
-    "playLists":[
-        {
-            "listName": "Testing List",
-            "playList": [
-                {"title":"crow song", "url":"https://odysee.com/@Fwfate:5/%E3%80%90%E4%B9%85%E9%81%A0%E3%81%9F%E3%81%BE%E3%80%91crow-song%EF%BC%88girls-dead:5"},
-                {"title":"alchemy", "url":"https://odysee.com/@Fwfate:5/alchemy-girls-dead-monster-vtuber:2"}
-            ],
-        },
-        {
-            "listName": "Testing List",
-            "playList": [
-                {"title":"crow song", "url":"https://odysee.com/@Fwfate:5/%E3%80%90%E4%B9%85%E9%81%A0%E3%81%9F%E3%81%BE%E3%80%91crow-song%EF%BC%88girls-dead:5"},
-                {"title":"alchemy", "url":"https://odysee.com/@Fwfate:5/alchemy-girls-dead-monster-vtuber:2"}
-            ],
-        }
-    ],
+    "playLists":[],
     "currentPlayListIndex": -1,
     "currentVideoIndex": -1,
-    "currentPlaylist":[
-        {"title":"crow song", "url":"https://odysee.com/@Fwfate:5/%E3%80%90%E4%B9%85%E9%81%A0%E3%81%9F%E3%81%BE%E3%80%91crow-song%EF%BC%88girls-dead:5"},
-        {"title":"alchemy", "url":"https://odysee.com/@Fwfate:5/alchemy-girls-dead-monster-vtuber:2"}
-    ]
+    "currentPlaylist":[]
 };
 
 var currentDate = new Date();
@@ -47,8 +28,31 @@ chrome.tabs.query({},function(tabs){
     }
 });
 
-chrome.storage.sync.get(['playLists', 'currentPlaylist', 'currentPlayListIndex', 'currentVideoIndex'], function(result) {
-    storageData = result;
+chrome.storage.sync.get(['playLists', 'currentPlayList', 'currentPlayListIndex', 'currentVideoIndex'], function(result) {
+    if (result.playLists)
+        storageData.playLists = result.playLists;
+    else {
+        var initPlayLists = {playLists: storageData.playLists}
+        chrome.storage.sync.set(initPlayLists)
+    }
+    if (result.currentPlayList)
+        storageData.currentPlayList = result.currentPlayList;
+    else {
+        var initCurrentPlayList = {currentPlayList: storageData.currentPlayList}
+        chrome.storage.sync.set(initCurrentPlayList);
+    }
+    if (result.currentPlayListIndex)
+        storageData.currentPlayListIndex = result.currentPlayListIndex;
+    else {
+        var initCurrentPlayListIndex = {currentPlayListIndex: storageData.currentPlayListIndex}
+        chrome.storage.sync.set(initCurrentPlayListIndex);
+    }
+    if (result.currentVideoIndex)
+        storageData.currentVideoIndex = result.currentVideoIndex;
+    else {
+        var initCurrentVideoIndex = {currentVideoIndex: storageData.currentVideoIndex}
+        chrome.storage.sync.set(initCurrentVideoIndex);
+    }
     console.log("current storageData", storageData);
     chrome.tabs.getSelected(null,function(tab) {
         var currentURL = tab.url;
