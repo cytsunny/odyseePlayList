@@ -9,7 +9,25 @@ div.play-list {
 div.play-list.current-list {
     border: 1px solid red;
 }
-span.now-playing {
+div.list-name-row .list-edit-buttons {
+    display: inline-block;
+    width: 10%;
+}
+div.list-name-row .list-edit-buttons a {
+    display: inline-block;
+    width: 50%;
+    text-align: center;
+}
+div.list-name-row .list-edit-buttons a.save-list-button {
+    display: none;
+}
+div.list-name-row .list-title{
+    display: inline-block;
+    width: 70%;
+}
+div.list-name-row .now-playing {
+    display: inline-block;
+    width: 20%;
     color: red;
 }
 input:read-only {
@@ -57,5 +75,8 @@ a.add-current-button {
 }
 
 .new-video-div {
+    display: none;
+}
+#new-list-div{
     display: none;
 }

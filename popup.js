@@ -66,11 +66,23 @@ function addComponentsByData(isOdysee, currentURL) {
         if (isCurrentList)
             playListDiv += ' current-list';
         playListDiv += '">';
-        playListDiv += '<input class="list-title" value="'+storageData['playLists'][playListIndex]['listName']+'" readonly/>';
+
+        playListDiv += '<div class="list-name-row">';
+        playListDiv += '<div class="list-edit-buttons">';
+        playListDiv += '<a title="Edit List Name" class="edit-list-button" id="edit-list-button-'+playListIndex+'"'+
+                            ' data-list-id="'+playListIndex+'" data-video-id="'+videoIndex+'">&#128393;</a>';
+        playListDiv += '<a title="Save List Name" class="save-list-button" id="save-list-button-'+playListIndex+'"'+
+                        ' data-list-id="'+playListIndex+'" data-video-id="'+videoIndex+'">&#128190;</a>';
+        playListDiv += '<a title="Delete Video" class="delete-list-button" id="delete-list-button-'+playListIndex+'"'+
+                        ' data-list-id="'+playListIndex+'" data-video-id="'+videoIndex+'">&#128465;</a>';
+        playListDiv += '</div>'
+        playListDiv += '<input id="list-title-'+playListIndex+'" class="list-title" value="'+storageData['playLists'][playListIndex]['listName']+'" readonly/>';
         if (isCurrentList)
             playListDiv += '<span class="now-playing">Now Playing...</span>';
         else
             playListDiv += '<a class="play-list-button" data-list-id="'+playListIndex+'">&#9658; Play</a>'
+        playListDiv += '</div>';
+
         for (var videoIndex in storageData['playLists'][playListIndex]["playList"]) {
             var videoData = storageData['playLists'][playListIndex]["playList"][videoIndex]
             playListDiv += '<div class="video-row'
@@ -97,11 +109,19 @@ function addComponentsByData(isOdysee, currentURL) {
         playListDiv += '<a title="Add New Video" id="save-new-button-'+playListIndex+'" class="save-new-button" data-list-id="'+playListIndex+'">&#128190;</a>';
         playListDiv += '</div>'
         if (isOdysee)
-            playListDiv += '<a title="Add Current Video to List" class="add-current-button" data-list-id="'+playListIndex+'">+ Current</a>'
+            playListDiv += '<a title="Add Current Odysee Video to List" class="add-current-button" data-list-id="'+playListIndex+'">+ Current</a>'
         playListDiv += '<a title="Add New Video to List" class="add-new-button" id="add-new-button-'+playListIndex+'"data-list-id="'+playListIndex+'">+ New</a>'
         playListDiv += '</div>';
         mainBody += playListDiv;
     }
+
+    mainBody += '<div id="new-list-div" class="list-name-row">';
+    mainBody += '<div class="list-edit-buttons">';
+    mainBody += '<a title="Create new list with this name" class="save-new-list-button" id="save-new-list-button">&#128190;</a>';
+    mainBody += '</div>';
+    mainBody += '<input id="new-list-title" class="list-title" value="New Play List '+playListIndex+'"/>';
+    mainBody += '</div>';
+    mainBody += '<a title="Add New Play List" class="add-new-list-button" id="add-new-list-button">+ New List</a>';
 
     document.body.appendChild(document.createRange().createContextualFragment(mainBody));
 
@@ -249,5 +269,71 @@ function addComponentsByData(isOdysee, currentURL) {
     for (var i = 0; i < playListButtons.length; i++) {
         playListButtons[i].addEventListener('click', playList, false);
     }
+
+    function startEditingListName() {
+        var listIndex = this.getAttribute("data-list-id");
+        document.getElementById("list-title-"+listIndex).readOnly = false;
+        document.getElementById("edit-list-button-"+listIndex).style.display = 'none';
+        document.getElementById("save-list-button-"+listIndex).style.display = 'inline-block';
+    }
+
+    var editListButtons = document.getElementsByClassName('edit-list-button');
+    for (var i = 0; i < editListButtons.length; i++) {
+        editListButtons[i].addEventListener('click', startEditingListName, false);
+    }
+
+    function saveListName() {
+        var listIndex = this.getAttribute("data-list-id");
+        var listNameInput = document.getElementById("list-title-"+listIndex)
+        listNameInput.readOnly = true;
+        document.getElementById("edit-list-button-"+listIndex).style.display = 'inline-block';
+        document.getElementById("save-list-button-"+listIndex).style.display = 'none';
+        storageData.playLists[listIndex].listName = listNameInput.value;
+        var updateData = {'playLists':storageData.playLists};
+        chrome.storage.sync.set(updateData);
+    }
+
+    var saveListButtons = document.getElementsByClassName('save-list-button');
+    for (var i = 0; i < saveListButtons.length; i++) {
+        saveListButtons[i].addEventListener('click', saveListName, false);
+    }
+
+    function deleteList() {
+        var listIndex = this.getAttribute("data-list-id");
+        var confirmDelete = confirm("Are you sure you want to delete "+storageData.playLists[listIndex].listName+"?");
+        if (!confirmDelete)
+            return;
+        
+        storageData.playLists.splice(listIndex, 1);
+        var updateData = {'playLists':storageData.playLists};
+        chrome.storage.sync.set(updateData, function() {
+            location.reload();
+        });
+    }
+
+    var deleteListButtons = document.getElementsByClassName('delete-list-button');
+    for (var i = 0; i < deleteListButtons.length; i++) {
+        deleteListButtons[i].addEventListener('click', deleteList, false);
+    }
+
+    function startAddingNewList() {
+        document.getElementById('new-list-div').style.display = 'block';
+        this.style.display = 'none';
+    }
+
+    document.getElementById('add-new-list-button').addEventListener('click', startAddingNewList, false);
+
+    function addNewList() {
+        storageData.playLists.push({
+            "listName": document.getElementById('new-list-title').value,
+            "playList": []
+        });
+        var updateData = {'playLists':storageData.playLists};
+        chrome.storage.sync.set(updateData, function() {
+            location.reload();
+        });
+    }
+
+    document.getElementById('save-new-list-button').addEventListener('click', addNewList, false);
 }
 

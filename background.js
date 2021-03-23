@@ -11,14 +11,13 @@ function playListPlugin(playList) {
 
     var updateData = {"currentVideoIndex": currentVideoIndex};
 
-    if ( (currentVideoIndex == -1) ||
-         ((currentVideoIndex+1) >= playList.length) ) {
-        updateData = {"currentVideoIndex": -1};
-        chrome.storage.sync.set(updateData);
-        updateData = {"currentPlayList": []};
-        chrome.storage.sync.set(updateData);
-        udpateData = {"currentPlayListIndex": -1};
-        chrome.storage.sync.set(updateData);
+    if ( currentVideoIndex == -1 ) {
+        var updateVideoIndex = {"currentVideoIndex": -1};
+        chrome.storage.sync.set(updateVideoIndex);
+        var updatePlayList = {"currentPlayList": []};
+        chrome.storage.sync.set(updatePlayList);
+        var udpatePlayListIndex = {"currentPlayListIndex": -1};
+        chrome.storage.sync.set(udpatePlayListIndex);
         return;
     }
 
@@ -26,7 +25,16 @@ function playListPlugin(playList) {
 
     document.getElementById("app").arrive("video#vjs_video_3_html5_api", function () {
         this.onended = function() {
-            window.location = playList[currentVideoIndex+1].url;
+            if ((currentVideoIndex+1) < playList.length) {
+                window.location = playList[currentVideoIndex+1].url;
+                return;
+            }
+            var updateVideoIndex = {"currentVideoIndex": -1};
+            chrome.storage.sync.set(updateVideoIndex);
+            var updatePlayList = {"currentPlayList": []};
+            chrome.storage.sync.set(updatePlayList);
+            var udpatePlayListIndex = {"currentPlayListIndex": -1};
+            chrome.storage.sync.set(udpatePlayListIndex);
         }
     })
 }
