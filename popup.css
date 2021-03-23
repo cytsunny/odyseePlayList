@@ -6,6 +6,12 @@ body{
 div.play-list {
     margin-bottom: 20px;
 }
+div.play-list.current-list {
+    border: 1px solid red;
+}
+span.now-playing {
+    color: red;
+}
 input:read-only {
     border: 0;
     text-overflow: ellipsis;
@@ -13,6 +19,9 @@ input:read-only {
 .video-row {
     position: relative;
     width: 100%;
+}
+.video-row.current-video {
+    border: 1px solid red;
 }
 .video-row .video-number {
     display: inline-block;

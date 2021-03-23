@@ -1,3 +1,4 @@
+//This is just for an overview of what the storage data looks like. Will be overwritten by chrome.storage.set in the code
 var storageData = {
     "playLists":[
         {
@@ -16,6 +17,7 @@ var storageData = {
         }
     ],
     "currentPlayListIndex": -1,
+    "currentVideoIndex": -1,
     "currentPlaylist":[
         {"title":"crow song", "url":"https://odysee.com/@Fwfate:5/%E3%80%90%E4%B9%85%E9%81%A0%E3%81%9F%E3%81%BE%E3%80%91crow-song%EF%BC%88girls-dead:5"},
         {"title":"alchemy", "url":"https://odysee.com/@Fwfate:5/alchemy-girls-dead-monster-vtuber:2"}
@@ -25,7 +27,27 @@ var storageData = {
 var currentDate = new Date();
 console.log('testing', currentDate);
 
-chrome.storage.sync.get(['playLists', 'currentPlaylist', 'currentPlayListIndex'], function(result) {
+chrome.tabs.query({},function(tabs){
+    var hasOdysee = false;
+    tabs.forEach(function(tab){
+        var tabURL = tab.url;
+        if (tabURL && tabURL.startsWith('https://odysee.com/'))
+            hasOdysee = true;
+    });
+    if (!hasOdysee) {
+        var updateData = {"currentPlayListIndex": -1}
+        chrome.storage.sync.set(updateData);
+        updateData = {"currentVideoIndex": -1}
+        chrome.storage.sync.set(updateData);
+        updateData = {"currentPlaylist": []}
+        chrome.storage.sync.set(updateData);
+        storageData.currentPlayListindex = -1;
+        storageData.currentVideoindex = -1;
+        storageData.currentPlayList = [];
+    }
+});
+
+chrome.storage.sync.get(['playLists', 'currentPlaylist', 'currentPlayListIndex', 'currentVideoIndex'], function(result) {
     storageData = result;
     console.log("current storageData", storageData);
     chrome.tabs.getSelected(null,function(tab) {
@@ -35,19 +57,26 @@ chrome.storage.sync.get(['playLists', 'currentPlaylist', 'currentPlayListIndex']
     });
 });
 
-
-
-
-
 function addComponentsByData(isOdysee, currentURL) {
     var mainBody = "<h1>My Odysee Lists</h1>";
 
     for (var playListIndex in storageData['playLists']) {
-        var playListDiv = '<div id="list-'+playListIndex+'" class="play-list">';
-        playListDiv += '<input class="list-title" value="'+storageData['playLists'][playListIndex]['listName']+'" readonly/>'
+        var isCurrentList = (playListIndex == storageData.currentPlayListIndex)
+        var playListDiv = '<div id="list-'+playListIndex+'" class="play-list';
+        if (isCurrentList)
+            playListDiv += ' current-list';
+        playListDiv += '">';
+        playListDiv += '<input class="list-title" value="'+storageData['playLists'][playListIndex]['listName']+'" readonly/>';
+        if (isCurrentList)
+            playListDiv += '<span class="now-playing">Now Playing...</span>';
+        else
+            playListDiv += '<a class="play-list-button" data-list-id="'+playListIndex+'">&#9658; Play</a>'
         for (var videoIndex in storageData['playLists'][playListIndex]["playList"]) {
             var videoData = storageData['playLists'][playListIndex]["playList"][videoIndex]
-            playListDiv += '<div class="video-row">';
+            playListDiv += '<div class="video-row'
+            if (isCurrentList && (videoIndex == storageData.currentVideoIndex))
+                playListDiv += ' current-video';
+            playListDiv += '">';
             playListDiv += '<input class="video-number" id="video-number-'+playListIndex+'-'+videoIndex+'" value="' + (parseInt(videoIndex) + 1) + '" readonly/>';
             playListDiv += '<input class="video-title" id="video-title-'+playListIndex+'-'+videoIndex+'" value="' + videoData['title'] + '" readonly/>';
             playListDiv += '<input class="video-url" id="video-url-'+playListIndex+'-'+videoIndex+'" value="' + videoData['url'] + '" readonly/>';
@@ -114,6 +143,11 @@ function addComponentsByData(isOdysee, currentURL) {
         var listIndex = this.getAttribute("data-list-id");
         var videoIndex = this.getAttribute("data-video-id");
         storageData.playLists[listIndex].playList.splice(videoIndex,1);
+
+        if (listIndex == storageData.currentPlayListIndex) {
+            var updateCurrentList = {"currentPlaylist": storageData.playLists[listIndex].playList}
+            chrome.storage.sync.set(updateCurrentList);
+        }
         var updateData = {"playLists": storageData.playLists};
         chrome.storage.sync.set(updateData, function() {
             location.reload();
@@ -127,8 +161,18 @@ function addComponentsByData(isOdysee, currentURL) {
 
     function addCurrentVideo() {
         var listIndex = this.getAttribute("data-list-id");
+        if (storageData.playLists[listIndex].playList.findIndex((element) => element.url == currentURL) != -1) {
+            alert('Cannot add repeat video');
+            return;
+        }
         var newVideoIndex = storageData.playLists[listIndex].playList.length;
         storageData.playLists[listIndex].playList.push({"title":"video "+newVideoIndex, "url":currentURL})
+
+        
+        if (listIndex == storageData.currentPlayListIndex) {
+            var updateCurrentList = {"currentPlaylist": storageData.playLists[listIndex].playList}
+            chrome.storage.sync.set(updateCurrentList);
+        }
         var updateData = {"playLists": storageData.playLists};
         chrome.storage.sync.set(updateData, function() {
             location.reload();
@@ -153,15 +197,23 @@ function addComponentsByData(isOdysee, currentURL) {
 
     function saveNewVideo() {
         var listIndex = this.getAttribute("data-list-id");
-        console.log('testing', listIndex);
-
         var videoTitleInput = document.getElementById("new-video-title-"+listIndex);
         var videoURLInput = document.getElementById("new-video-url-"+listIndex);
+        var foundInList = storageData.playLists[listIndex].playList.findIndex((element) => element.url == videoURLInput.value)
+        if (foundInList != -1) {
+            alert('Cannot add repeat video');
+            return;
+        }
+
         storageData.playLists[listIndex].playList.push({
             "title": videoTitleInput.value,
             "url":videoURLInput.value
         })
 
+        if (listIndex == storageData.currentPlayListIndex) {
+            var updateCurrentList = {"currentPlaylist": storageData.playLists[listIndex].playList}
+            chrome.storage.sync.set(updateCurrentList);
+        }
         var updateData = {"playLists": storageData.playLists};
         chrome.storage.sync.set(updateData, function() {
             location.reload();
@@ -169,9 +221,33 @@ function addComponentsByData(isOdysee, currentURL) {
     }
 
     var saveNewButtons = document.getElementsByClassName("save-new-button");
-    console.log('testing pre', saveNewButtons);
     for (var i = 0; i < saveNewButtons.length; i++) {
         saveNewButtons[i].addEventListener('click', saveNewVideo, false);
+    }
+
+    function playList() {
+        var listIndex = this.getAttribute("data-list-id");
+        if (isOdysee) {
+            chrome.tabs.getSelected(null, function (tab) {
+                chrome.tabs.update(tab.id, {url: storageData.playLists[listIndex].playList[0].url});
+            });
+        }
+        else {
+            chrome.tabs.create({url: storageData.playLists[listIndex].playList[0].url});
+        }
+        var updateData = {"currentPlayListIndex": listIndex}
+        chrome.storage.sync.set(updateData);
+        updateData = {"currentVideoIndex": 0}
+        chrome.storage.sync.set(updateData);
+        updateData = {"currentPlaylist": storageData.playLists[listIndex].playList};
+        chrome.storage.sync.set(updateData);
+        storageData.currentPlayListindex = listIndex;
+        storageData.currentPlayList = storageData.playLists[listIndex].playList;
+    }
+
+    var playListButtons = document.getElementsByClassName("play-list-button");
+    for (var i = 0; i < playListButtons.length; i++) {
+        playListButtons[i].addEventListener('click', playList, false);
     }
 }
 
