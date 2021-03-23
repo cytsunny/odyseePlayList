@@ -1,6 +1,8 @@
 # odyseePlayList
 A chrome extension to add play list function until official support
 
+Currently waiting for approval to be listed in Chrome 
+
 I hope there will be a official play list function in odysee.com soon, but in case if it is still not yet supported:
 
 ## Features to add in mind
