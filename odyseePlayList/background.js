@@ -1,8 +1,8 @@
 console.log('Odysee Playlist plugin loaded');
 
-chrome.storage.sync.get(['currentPlaylist'], function(result) {
+chrome.storage.sync.get(['currentPlayList'], function(result) {
     console.log('testing result', result);
-    playListPlugin(result['currentPlaylist']);
+    playListPlugin(result['currentPlayList']);
 });
 
 function playListPlugin(playList) {
